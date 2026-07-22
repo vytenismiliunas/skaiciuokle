@@ -177,7 +177,7 @@
 </div>
 
 <script>
-const TOKEN = 'patcuem1FOXuzDLhv';
+const TOKEN = 'pat28xUi94nFiAt5t';
 const BASE  = 'appZsXw0VPqc0bS6W';
 const SHEET_W = 441, SHEET_H = 314;
 
@@ -197,7 +197,7 @@ async function fetchAll(table) {
   do {
     const url = `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(table)}` +
       (offset ? `?offset=${offset}` : '');
-    const r = await fetch(url, { headers: { Authorization: `Bearer ${TOKEN}` } });
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${TOKEN}` }, mode: 'cors' });
     if (!r.ok) throw new Error(`Lentelė "${table}" nerasta (${r.status})`);
     const d = await r.json();
     records = records.concat(d.records);
