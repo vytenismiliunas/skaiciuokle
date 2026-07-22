@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spaudos kainų skaičiuoklė</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; }
+  .header { background: #1a1a1a; color: white; padding: 1.25rem 2rem; display: flex; align-items: center; gap: 1rem; }
+  .header h1 { font-size: 18px; font-weight: 500; }
+  .header span { font-size: 13px; color: #888; }
+  .container { max-width: 860px; margin: 2rem auto; padding: 0 1.5rem; }
+  .card { background: white; border: 0.5px solid #e0e0e0; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
+  .card-title { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1.25rem; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 12px; color: #666; }
+  select, input[type=number], input[type=text] {
+    width: 100%; padding: 8px 10px; border: 0.5px solid #ddd;
+    border-radius: 8px; font-size: 14px; background: white; color: #1a1a1a;
+    outline: none; transition: border-color 0.15s;
+  }
+  select:focus, input:focus { border-color: #999; }
+  .custom-dims { display: flex; gap: 8px; align-items: center; }
+  .custom-dims input { flex: 1; }
+  .custom-dims span { color: #999; font-size: 14px; }
+  .fit-info { margin-top: 10px; font-size: 12px; color: #666; background: #f8f8f8; padding: 8px 12px; border-radius: 8px; }
+  .checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .check-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 0.5px solid #e8e8e8; border-radius: 8px; cursor: pointer; transition: background 0.1s; }
+  .check-item:hover { background: #f8f8f8; }
+  .check-item input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; accent-color: #1a1a1a; }
+  .check-item label { font-size: 13px; cursor: pointer; flex: 1; }
+  .check-item .check-price { font-size: 11px; color: #999; }
+  .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.25rem; }
+  .metric { background: #f8f8f8; border-radius: 8px; padding: 12px; }
+  .metric-label { font-size: 11px; color: #888; margin-bottom: 4px; }
+  .metric-val { font-size: 20px; font-weight: 500; }
+  .metric-sub { font-size: 11px; color: #aaa; margin-top: 2px; }
+  .breakdown { border-top: 0.5px solid #eee; padding-top: 1rem; }
+  .b-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; color: #555; }
+  .b-row.total { font-size: 16px; font-weight: 600; color: #1a1a1a; border-top: 0.5px solid #eee; margin-top: 8px; padding-top: 12px; }
+  .b-row.vat { font-size: 13px; color: #888; }
+  .price-big { font-size: 36px; font-weight: 600; margin-bottom: 4px; }
+  .price-sub { font-size: 13px; color: #888; }
+  .loading { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #888; padding: 1rem 0; }
+  .spinner { width: 16px; height: 16px; border: 2px solid #eee; border-top-color: #888; border-radius: 50%; animation: spin 0.6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error { background: #fff3f3; border: 0.5px solid #fcc; border-radius: 8px; padding: 12px; font-size: 13px; color: #c00; margin-bottom: 1rem; }
+  .btn-submit { width: 100%; padding: 14px; background: #1a1a1a; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 500; cursor: pointer; margin-top: 1rem; transition: background 0.15s; }
+  .btn-submit:hover { background: #333; }
+  .btn-submit:disabled { background: #ccc; cursor: default; }
+  .result-card { background: white; border: 0.5px solid #e0e0e0; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
+  @media (max-width: 600px) {
+    .grid2, .grid3, .checkbox-grid, .metrics { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Spaudos kainų skaičiuoklė</h1>
+  <span id="load-status">Kraunama...</span>
+</div>
+
+<div class="container">
+  <div id="error-box" class="error" style="display:none;"></div>
+
+  <div class="card">
+    <p class="card-title">Formatas ir tiražas</p>
+    <div class="grid2">
+      <div class="field">
+        <label>Standartinis formatas</label>
+        <select id="fmt">
+          <option value="A6">A6 (105×148 mm)</option>
+          <option value="A5">A5 (148×210 mm)</option>
+          <option value="A4" selected>A4 (210×297 mm)</option>
+          <option value="A3">A3 (297×420 mm)</option>
+          <option value="SRA3">SRA3 (320×450 mm)</option>
+          <option value="custom">Nestandartinis...</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Tiražas (vnt.)</label>
+        <input type="number" id="qty" value="500" min="1">
+      </div>
+    </div>
+    <div id="custom-wrap" style="display:none; margin-top:1rem;">
+      <div class="field">
+        <label>Matmenys (mm) — plotis × aukštis</label>
+        <div class="custom-dims">
+          <input type="number" id="cw" placeholder="Plotis" value="200" min="10" max="440">
+          <span>×</span>
+          <input type="number" id="ch" placeholder="Aukštis" value="150" min="10" max="313">
+        </div>
+      </div>
+    </div>
+    <div class="fit-info" id="fit-info">Pasirinkite formatą ir tiražą</div>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Medžiaga ir spausdinimas</p>
+    <div class="grid2">
+      <div class="field">
+        <label>Popierius</label>
+        <select id="paper">
+          <option value="">— kraunama —</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Spalvingumas</label>
+        <select id="color">
+          <option value="40">4+0 (vienpusis)</option>
+          <option value="44">4+4 (dvipusis)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Užbaigimas</p>
+    <div style="margin-bottom:1rem;">
+      <div class="grid2" style="margin-bottom:0.75rem;">
+        <div class="field">
+          <label>Laminavimas</label>
+          <select id="lam">
+            <option value="">— nėra —</option>
+            <option value="Viena pusė">Viena pusė</option>
+            <option value="Abi pusės">Abi pusės</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Folijavimas</label>
+          <select id="fol">
+            <option value="">— nėra —</option>
+            <option value="Viena pusė">Viena pusė</option>
+            <option value="Abi pusės">Abi pusės</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <p style="font-size:12px;color:#888;margin-bottom:0.75rem;">Papildomos operacijos</p>
+    <div class="checkbox-grid" id="postpress-grid">
+      <div class="loading"><div class="spinner"></div> Kraunama...</div>
+    </div>
+  </div>
+
+  <div class="result-card" id="result-card">
+    <p class="card-title">Skaičiavimo rezultatas</p>
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-label">Gaminių lape</div>
+        <div class="metric-val" id="r-fit">—</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Lapų kiekis</div>
+        <div class="metric-val" id="r-sheets">—</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Kaina / lapas</div>
+        <div class="metric-val" id="r-unit">—</div>
+        <div class="metric-sub" id="r-unit-sub"></div>
+      </div>
+    </div>
+    <div class="breakdown">
+      <div class="b-row"><span>Spausdinimas</span><span id="b-print">—</span></div>
+      <div class="b-row" id="b-lam-row" style="display:none"><span id="b-lam-label">Laminavimas</span><span id="b-lam">—</span></div>
+      <div class="b-row" id="b-fol-row" style="display:none"><span id="b-fol-label">Folijavimas</span><span id="b-fol">—</span></div>
+      <div id="b-extra-rows"></div>
+      <div class="b-row total"><span>Viso (be PVM)</span><span id="b-total">—</span></div>
+      <div class="b-row vat"><span>PVM 21%</span><span id="b-vat">—</span></div>
+      <div class="b-row total"><span>Viso (su PVM)</span><span id="b-totalvat">—</span></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const TOKEN = 'patcuem1FOXuzDLhv';
+const BASE  = 'appZsXw0VPqc0bS6W';
+const SHEET_W = 441, SHEET_H = 314;
+
+const FORMATS = {
+  A6:{w:105,h:148}, A5:{w:148,h:210}, A4:{w:210,h:297},
+  A3:{w:297,h:420}, SRA3:{w:320,h:450}
+};
+const TIRAZAI = [15,25,50,75,100,200,300,400,500,750,1000];
+
+let printPrices = [];
+let lamPrices   = [];
+let folPrices   = [];
+let extraOps    = [];
+
+async function fetchAll(table) {
+  let records = [], offset = null;
+  do {
+    const url = `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(table)}` +
+      (offset ? `?offset=${offset}` : '');
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${TOKEN}` } });
+    if (!r.ok) throw new Error(`Lentelė "${table}" nerasta (${r.status})`);
+    const d = await r.json();
+    records = records.concat(d.records);
+    offset = d.offset || null;
+  } while (offset);
+  return records;
+}
+
+async function loadData() {
+  document.getElementById('load-status').textContent = 'Kraunama...';
+  try {
+    const [sp, lam, fol, extra] = await Promise.all([
+      fetchAll('Kainos_Spausdinimas'),
+      fetchAll('Kainos_Laminavimas'),
+      fetchAll('Kainos_Folijavimas (sleeking)'),
+      fetchAll('Kainos_Postpress_Papildomi'),
+    ]);
+
+    printPrices = sp.map(r => r.fields);
+    lamPrices   = lam.map(r => r.fields);
+    folPrices   = fol.map(r => r.fields);
+    extraOps    = extra.map(r => r.fields);
+
+    // Fill paper dropdown
+    const papers = [...new Set(printPrices.map(r => r['Medžiaga']))].filter(Boolean).sort();
+    const sel = document.getElementById('paper');
+    sel.innerHTML = papers.map(p => `<option value="${p}">${p}</option>`).join('');
+
+    // Fill postpress checkboxes
+    const grid = document.getElementById('postpress-grid');
+    grid.innerHTML = extraOps.map(op => `
+      <label class="check-item">
+        <input type="checkbox" class="extra-check" data-op="${op['Operacija']}" data-price="${op['Kaina_vnt']}" data-min="${op['Minimalus_EUR']}">
+        <span style="flex:1;font-size:13px;">${op['Operacija']}</span>
+        <span class="check-price">${op['Kaina_vnt']} €/vnt</span>
+      </label>
+    `).join('');
+
+    document.querySelectorAll('.extra-check').forEach(cb => cb.addEventListener('change', recalc));
+    document.getElementById('load-status').textContent = 'Paruošta ✓';
+    recalc();
+  } catch(e) {
+    document.getElementById('error-box').style.display = '';
+    document.getElementById('error-box').textContent = 'Klaida: ' + e.message;
+    document.getElementById('load-status').textContent = 'Klaida';
+  }
+}
+
+function calcFit(fw, fh) {
+  const n1 = Math.floor(SHEET_W/fw) * Math.floor(SHEET_H/fh);
+  const n2 = Math.floor(SHEET_W/fh) * Math.floor(SHEET_H/fw);
+  return Math.max(n1, n2, 1);
+}
+
+function getTieredPrice(rows, qty, tirazField, priceField, filterFn) {
+  const filtered = rows.filter(filterFn).sort((a,b) => a[tirazField] - b[tirazField]);
+  let price = null;
+  for (const r of filtered) {
+    if (qty >= r[tirazField]) price = r[priceField];
+  }
+  return price;
+}
+
+function fmt2(v) { return v == null ? '—' : v.toFixed(2) + ' €'; }
+
+function recalc() {
+  const fmtSel = document.getElementById('fmt').value;
+  let fw, fh;
+  if (fmtSel === 'custom') {
+    fw = parseFloat(document.getElementById('cw').value) || 100;
+    fh = parseFloat(document.getElementById('ch').value) || 100;
+  } else {
+    fw = FORMATS[fmtSel].w; fh = FORMATS[fmtSel].h;
+  }
+  const qty = parseInt(document.getElementById('qty').value) || 1;
+  const paper = document.getElementById('paper').value;
+  const color = document.getElementById('color').value;
+  const lamVal = document.getElementById('lam').value;
+  const folVal = document.getElementById('fol').value;
+
+  const fit = calcFit(fw, fh);
+  const sheets = Math.ceil(qty / fit);
+
+  const orient1 = Math.floor(SHEET_W/fw)*Math.floor(SHEET_H/fh);
+  const orient2 = Math.floor(SHEET_W/fh)*Math.floor(SHEET_H/fw);
+  document.getElementById('fit-info').textContent =
+    `SRA3 (441×314 mm) → ${fw}×${fh} mm: ${fit} vnt. lape` +
+    (orient1 >= orient2 ? ' (tiesiai)' : ' (pasukta 90°)') +
+    ` — lapų reikės: ${sheets}`;
+
+  document.getElementById('r-fit').textContent = fit;
+  document.getElementById('r-sheets').textContent = sheets;
+
+  // Print price
+  const unitPrice = getTieredPrice(
+    printPrices, qty, 'Tiražas_nuo', color === '40' ? 'Kaina_40' : 'Kaina_44',
+    r => r['Medžiaga'] === paper
+  );
+  document.getElementById('r-unit').textContent = unitPrice ? unitPrice.toFixed(3) + ' €' : '—';
+  document.getElementById('r-unit-sub').textContent = color === '40' ? 'vienpusis' : 'dvipusis';
+
+  const printTotal = unitPrice != null ? unitPrice * sheets : null;
+  document.getElementById('b-print').textContent = fmt2(printTotal);
+
+  // Lam
+  let lamTotal = null;
+  if (lamVal) {
+    const lu = getTieredPrice(lamPrices, qty, 'Tiražas_nuo', 'Kaina', r => r['Tipas'] === lamVal);
+    if (lu != null) lamTotal = lu * sheets;
+    document.getElementById('b-lam-row').style.display = '';
+    document.getElementById('b-lam-label').textContent = 'Laminavimas (' + lamVal.toLowerCase() + ')';
+    document.getElementById('b-lam').textContent = fmt2(lamTotal);
+  } else {
+    document.getElementById('b-lam-row').style.display = 'none';
+  }
+
+  // Fol
+  let folTotal = null;
+  if (folVal) {
+    const fu = getTieredPrice(folPrices, qty, 'Tiražas_nuo', 'Kaina', r => r['Tipas'] === folVal);
+    if (fu != null) folTotal = fu * sheets;
+    document.getElementById('b-fol-row').style.display = '';
+    document.getElementById('b-fol-label').textContent = 'Folijavimas (' + folVal.toLowerCase() + ')';
+    document.getElementById('b-fol').textContent = fmt2(folTotal);
+  } else {
+    document.getElementById('b-fol-row').style.display = 'none';
+  }
+
+  // Extra postpress
+  let extraTotal = 0;
+  let extraHTML = '';
+  document.querySelectorAll('.extra-check:checked').forEach(cb => {
+    const pricePerUnit = parseFloat(cb.dataset.price);
+    const minEur = parseFloat(cb.dataset.min);
+    const calculated = pricePerUnit * qty;
+    const final = Math.max(calculated, minEur);
+    extraTotal += final;
+    const note = calculated < minEur ? ` (min. ${minEur.toFixed(2)} €)` : '';
+    extraHTML += `<div class="b-row"><span>${cb.dataset.op}${note}</span><span>${final.toFixed(2)} €</span></div>`;
+  });
+  document.getElementById('b-extra-rows').innerHTML = extraHTML;
+
+  const total = (printTotal || 0) + (lamTotal || 0) + (folTotal || 0) + extraTotal;
+  const vat = total * 0.21;
+  document.getElementById('b-total').textContent = printTotal != null ? fmt2(total) : '—';
+  document.getElementById('b-vat').textContent = printTotal != null ? fmt2(vat) : '—';
+  document.getElementById('b-totalvat').textContent = printTotal != null ? fmt2(total + vat) : '—';
+}
+
+// Events
+document.getElementById('fmt').addEventListener('change', function() {
+  document.getElementById('custom-wrap').style.display = this.value === 'custom' ? '' : 'none';
+  recalc();
+});
+['cw','ch','qty'].forEach(id => document.getElementById(id).addEventListener('input', recalc));
+document.getElementById('paper').addEventListener('change', recalc);
+document.getElementById('color').addEventListener('change', recalc);
+document.getElementById('lam').addEventListener('change', recalc);
+document.getElementById('fol').addEventListener('change', recalc);
+
+loadData();
+</script>
+</body>
+</html>
