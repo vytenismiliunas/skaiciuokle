@@ -317,7 +317,7 @@ async function loadData() {
       <label class="check-item">
         <input type="checkbox" class="extra-check" data-op="${op['Operacija']}" data-price="${op['Kaina_vnt']}" data-min="${op['Minimalus_EUR']}">
         <span style="flex:1;font-size:13px;">${op['Operacija']}</span>
-        <span class="check-price">${op['Kaina_vnt']} €/vnt</span>
+        <span class="check-price">${(op['Kaina_vnt'] * 0.9).toFixed(3)} €/vnt</span>
       </label>`).join('');
     document.querySelectorAll('.extra-check').forEach(cb => cb.addEventListener('change', recalcSpaudos));
 
@@ -327,7 +327,7 @@ async function loadData() {
       <label class="check-item">
         <input type="checkbox" class="v-extra-check" data-op="${op['Operacija']}" data-price="${op['Kaina_vnt']}" data-min="${op['Minimalus_EUR']}">
         <span style="flex:1;font-size:13px;">${op['Operacija']}</span>
-        <span class="check-price">${op['Kaina_vnt']} €/vnt</span>
+        <span class="check-price">${(op['Kaina_vnt'] * 0.9).toFixed(3)} €/vnt</span>
       </label>`).join('');
     document.querySelectorAll('.v-extra-check').forEach(cb => cb.addEventListener('change', recalcVizitines));
 
@@ -404,7 +404,8 @@ function recalcSpaudos() {
   document.getElementById('r-sheets').textContent = sheets;
 
   const unitPrice = getTieredPrice(printPrices, qty, 'Tiražas_nuo', 'Kaina', r => r['Medžiaga']?.trim() === paper?.trim() && Number(r['Spalvingumas']) === Number(color));
-  document.getElementById('r-unit').textContent = unitPrice != null ? unitPrice.toFixed(3) + ' €' : '—';
+  const discountedUnit = unitPrice != null ? unitPrice * (1 - discount) : null;
+  document.getElementById('r-unit').textContent = discountedUnit != null ? discountedUnit.toFixed(3) + ' €' : '—';
   document.getElementById('r-unit-sub').textContent = color === '40' ? 'vienpusis' : 'dvipusis';
 
   const discount = getDiscount(sheets);
