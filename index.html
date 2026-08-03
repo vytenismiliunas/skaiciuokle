@@ -391,7 +391,7 @@ function recalcSpaudos() {
   document.getElementById('r-fit').textContent = fit;
   document.getElementById('r-sheets').textContent = sheets;
 
-  const unitPrice = getTieredPrice(printPrices, qty, 'Tiražas_nuo', 'Kaina', r => r['Medžiaga']?.trim() === paper?.trim() && String(r['Spalvingumas']) === String(color));
+  const unitPrice = getTieredPrice(printPrices, qty, 'Tiražas_nuo', 'Kaina', r => r['Medžiaga']?.trim() === paper?.trim() && Number(r['Spalvingumas']) === Number(color));
   document.getElementById('r-unit').textContent = unitPrice != null ? unitPrice.toFixed(3) + ' €' : '—';
   document.getElementById('r-unit-sub').textContent = color === '40' ? 'vienpusis' : 'dvipusis';
 
