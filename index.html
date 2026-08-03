@@ -298,6 +298,7 @@ async function loadData() {
     ]);
 
     printPrices = sp.map(r => r.fields);
+    console.log('Pirmas irasas:', JSON.stringify(printPrices[0]));
     lamPrices   = lam.map(r => r.fields);
     folPrices   = fol.map(r => r.fields);
     extraOps    = extra.map(r => r.fields);
@@ -390,7 +391,7 @@ function recalcSpaudos() {
   document.getElementById('r-fit').textContent = fit;
   document.getElementById('r-sheets').textContent = sheets;
 
-  const unitPrice = getTieredPrice(printPrices, qty, 'Tiražas_nuo', 'Kaina', r => r['Medžiaga'] === paper && String(r['Spalvingumas']) === color);
+  const unitPrice = getTieredPrice(printPrices, qty, 'Tiražas_nuo', 'Kaina', r => r['Medžiaga']?.trim() === paper?.trim() && String(r['Spalvingumas']) === String(color));
   document.getElementById('r-unit').textContent = unitPrice != null ? unitPrice.toFixed(3) + ' €' : '—';
   document.getElementById('r-unit-sub').textContent = color === '40' ? 'vienpusis' : 'dvipusis';
 
