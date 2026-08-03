@@ -404,8 +404,8 @@ function recalcSpaudos() {
   document.getElementById('r-sheets').textContent = sheets;
 
   const unitPrice = getTieredPrice(printPrices, qty, 'Tiražas_nuo', 'Kaina', r => r['Medžiaga']?.trim() === paper?.trim() && Number(r['Spalvingumas']) === Number(color));
-  const discountedUnit = unitPrice != null ? unitPrice * (1 - discount) : null;
-  document.getElementById('r-unit').textContent = discountedUnit != null ? discountedUnit.toFixed(3) + ' €' : '—';
+  // discount apibrėžiamas žemiau, todėl skaičiuojame po jo
+  // r-unit atnaujinamas žemiau
   document.getElementById('r-unit-sub').textContent = color === '40' ? 'vienpusis' : 'dvipusis';
 
   const discount = getDiscount(sheets);
@@ -413,6 +413,8 @@ function recalcSpaudos() {
   const dEl = document.getElementById('b-discount-info');
   if (dEl) dEl.textContent = 'Taikoma nuolaida: ' + discountPct + '% (' + sheets + ' lapų)';
   const printTotal = unitPrice != null ? unitPrice * sheets * (1 - discount) : null;
+  const discountedUnit = unitPrice != null ? unitPrice * (1 - discount) : null;
+  document.getElementById('r-unit').textContent = discountedUnit != null ? discountedUnit.toFixed(3) + ' €' : '—';
   document.getElementById('b-print').textContent = fmt2(printTotal);
 
   let lamTotal = null;
