@@ -251,6 +251,44 @@
     </div>
   </div>
 
+
+  <!-- UŽSAKYMO FORMA -->
+  <div class="card" id="order-form-section">
+    <p class="card-title">Pateikti užklausą</p>
+    <div class="grid2" style="margin-bottom:1rem;">
+      <div class="field">
+        <label>Klientas</label>
+        <select id="order-client">
+          <option value="">— pasirinkite —</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Arba naujas klientas</label>
+        <input type="text" id="order-newclient" placeholder="UAB Nauja Įmonė">
+      </div>
+    </div>
+    <div class="grid2" style="margin-bottom:1rem;">
+      <div class="field">
+        <label>Kontaktinis asmuo</label>
+        <input type="text" id="order-contact" placeholder="Vardas Pavardė">
+      </div>
+      <div class="field">
+        <label>El. paštas</label>
+        <input type="text" id="order-email" placeholder="vardas@imone.lt">
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:1rem;">
+      <label>Telefonas</label>
+      <input type="text" id="order-phone" placeholder="+370 600 00000">
+    </div>
+    <div class="field" style="margin-bottom:1rem;">
+      <label>Komentaras</label>
+      <textarea id="order-comment" rows="3" style="width:100%;padding:8px 10px;border:0.5px solid #ddd;border-radius:8px;font-size:14px;resize:vertical;" placeholder="Papildoma informacija..."></textarea>
+    </div>
+    <div id="order-status" style="display:none;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:1rem;"></div>
+    <button onclick="submitOrder()" style="width:100%;padding:14px;background:#f5a623;color:white;border:none;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;">Pateikti užklausą</button>
+  </div>
+
 </div>
 
 <script>
@@ -518,6 +556,117 @@ document.getElementById('v-qty').addEventListener('input', recalcVizitines);
 document.getElementById('v-color').addEventListener('change', recalcVizitines);
 document.getElementById('v-lam').addEventListener('change', recalcVizitines);
 document.getElementById('v-fol').addEventListener('change', recalcVizitines);
+
+
+// ===== UŽSAKYMO FORMA =====
+const WRITE_TOKEN = 'patl3cPkR9HU2WXAh.6ea5f9cc5e367b8be2925cd0aaf331d3194b6afee45585a0c3639a341790d4e0';
+const TBL_ORDERS = 'tblc2g1sPycggbIke';
+const TBL_CLIENTS = 'tblZDs9gNB5IlMd8W';
+
+async function loadClients() {
+  try {
+    const r = await fetch(`https://api.airtable.com/v0/${BASE}/${TBL_CLIENTS}`, {
+      headers: { Authorization: `Bearer ${WRITE_TOKEN}` }, mode: 'cors'
+    });
+    const d = await r.json();
+    const sel = document.getElementById('order-client');
+    d.records
+      .filter(rec => rec.fields['Įmonės pavadinimas'])
+      .sort((a,b) => a.fields['Įmonės pavadinimas'].localeCompare(b.fields['Įmonės pavadinimas']))
+      .forEach(rec => {
+        const opt = document.createElement('option');
+        opt.value = rec.id;
+        opt.textContent = rec.fields['Įmonės pavadinimas'];
+        sel.appendChild(opt);
+      });
+  } catch(e) { console.error('Klientų klaida:', e); }
+}
+
+async function submitOrder() {
+  const clientId = document.getElementById('order-client').value;
+  const newClient = document.getElementById('order-newclient').value.trim();
+  const comment = document.getElementById('order-comment').value;
+  const statusEl = document.getElementById('order-status');
+
+  if (!clientId && !newClient) {
+    statusEl.style.display = '';
+    statusEl.style.background = '#fff3f3';
+    statusEl.style.color = '#c00';
+    statusEl.textContent = 'Pasirinkite įmonę arba įveskite naują!';
+    return;
+  }
+
+  const isViz = currentType === 'vizitines';
+  const fields = {
+    'Tipas': isViz ? 'Vizitinės' : 'Nestandartinis',
+    'Klientų tipas': 'B2C',
+    'Komentaras': comment,
+  };
+
+  if (isViz) {
+    fields['Kiekis'] = parseInt(document.getElementById('v-qty').value) || 0;
+    fields['Spalvingumas'] = document.getElementById('v-color').value;
+    fields['Formatas'] = 'Vizitinės 90×50 / 85×55';
+    fields['Galutinė kaina'] = parseFloat(document.getElementById('v-b-total').textContent) || 0;
+    fields['Galutinė su PVM'] = parseFloat(document.getElementById('v-b-totalvat').textContent) || 0;
+  } else {
+    const fmt = document.getElementById('fmt').value;
+    fields['Formatas'] = fmt === 'custom' ? 'Nestandartinis' : fmt;
+    if (fmt === 'custom') {
+      fields['Matmenys'] = document.getElementById('cw').value + '×' + document.getElementById('ch').value + ' mm';
+    }
+    fields['Kiekis'] = parseInt(document.getElementById('qty').value) || 0;
+    fields['Popierius'] = document.getElementById('paper').value;
+    fields['Spalvingumas'] = document.getElementById('color').value === '40' ? '4+0' : '4+4';
+    const uzb = [];
+    const lam = document.getElementById('lam').value;
+    const fol = document.getElementById('fol').value;
+    if (lam) uzb.push('Laminavimas ' + lam);
+    if (fol) uzb.push('Folijavimas ' + fol);
+    document.querySelectorAll('.extra-check:checked').forEach(cb => uzb.push(cb.dataset.op));
+    if (uzb.length) fields['Užbaigimas'] = uzb.join(', ');
+    fields['Galutinė kaina'] = parseFloat(document.getElementById('b-total').textContent) || 0;
+    fields['Galutinė su PVM'] = parseFloat(document.getElementById('b-totalvat').textContent) || 0;
+  }
+
+  const phone = document.getElementById('order-phone').value.trim();
+  if (phone) fields['Telefonas'] = phone;
+  if (clientId) fields['Užsakovas'] = [clientId];
+
+  statusEl.style.display = '';
+  statusEl.style.background = '#f8f8f8';
+  statusEl.style.color = '#666';
+  statusEl.textContent = 'Siunčiama...';
+
+  try {
+    const r = await fetch(`https://api.airtable.com/v0/${BASE}/${TBL_ORDERS}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${WRITE_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ fields }),
+      mode: 'cors'
+    });
+    const d = await r.json();
+    if (d.id) {
+      statusEl.style.background = '#f0fff0';
+      statusEl.style.color = '#2d6a2d';
+      statusEl.textContent = 'Užklausa sėkmingai pateikta! ✓';
+      document.getElementById('order-comment').value = '';
+      document.getElementById('order-client').value = '';
+      document.getElementById('order-newclient').value = '';
+    } else {
+      throw new Error(JSON.stringify(d));
+    }
+  } catch(e) {
+    statusEl.style.background = '#fff3f3';
+    statusEl.style.color = '#c00';
+    statusEl.textContent = 'Klaida: ' + e.message;
+  }
+}
+
+loadClients();
 
 loadData();
 </script>
