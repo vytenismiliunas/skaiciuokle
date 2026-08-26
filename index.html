@@ -570,7 +570,7 @@ document.getElementById('v-fol').addEventListener('change', recalcVizitines);
 
 // ===== UŽSAKYMO FORMA =====
 const WRITE_TOKEN = 'patKUR6Unz3lBlPgs.4c14ad1976cfa898a77520ab4576587cf1a970abd09dc680a1a315315441fbc8';
-const TBL_ORDERS = 'tbl229vF2I8zLa9XG';
+const TBL_ORDERS = 'tblc2g1sPycggbIke';
 const TBL_CLIENTS = 'tblZDs9gNB5IlMd8W';
 
 async function loadClients() {
@@ -581,12 +581,12 @@ async function loadClients() {
     const d = await r.json();
     const sel = document.getElementById('order-client');
     d.records
-      .filter(rec => rec.fields['Įmonės pavadinimas'])
-      .sort((a,b) => a.fields['Įmonės pavadinimas'].localeCompare(b.fields['Įmonės pavadinimas']))
+      .filter(rec => rec.fields['Įmonės pavadinimas arba brandas'])
+      .sort((a,b) => a.fields['Įmonės pavadinimas arba brandas'].localeCompare(b.fields['Įmonės pavadinimas arba brandas']))
       .forEach(rec => {
         const opt = document.createElement('option');
         opt.value = rec.id;
-        opt.textContent = rec.fields['Įmonės pavadinimas'];
+        opt.textContent = rec.fields['Įmonės pavadinimas arba brandas'];
         sel.appendChild(opt);
       });
   } catch(e) { console.error('Klientų klaida:', e); }
@@ -619,12 +619,12 @@ async function submitOrder() {
   if (isViz) {
     fields['Kiekis'] = parseInt(document.getElementById('v-qty').value) || 0;
     fields['Spalvingumas'] = document.getElementById('v-color').value;
-    fields['formatas'] = 'Vizitinės 90×50 / 85×55';
+    fields['Formatas'] = 'Vizitinės 90×50 / 85×55';
     fields['Galutinė kaina'] = parseFloat(document.getElementById('v-b-total').textContent) || 0;
     fields['Galutinė su PVM'] = parseFloat(document.getElementById('v-b-totalvat').textContent) || 0;
   } else {
     const fmt = document.getElementById('fmt').value;
-    fields['formatas'] = fmt === 'custom' ? 'Nestandartinis' : fmt;
+    fields['Formatas'] = fmt === 'custom' ? 'Nestandartinis' : fmt;
     if (fmt === 'custom') {
       fields['Matmenys'] = document.getElementById('cw').value + '×' + document.getElementById('ch').value + ' mm';
     }
