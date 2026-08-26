@@ -128,16 +128,22 @@
           <label>Laminavimas</label>
           <select id="lam">
             <option value="">— nėra —</option>
-            <option value="Viena pusė">Viena pusė</option>
-            <option value="Abi pusės">Abi pusės</option>
+            <option value="Laminavimas blizgus (viena pusė)">Blizgus (viena pusė)</option>
+            <option value="Laminavimas blizgus (abi pusės)">Blizgus (abi pusės)</option>
+            <option value="Laminavimas matinis (viena pusė)">Matinis (viena pusė)</option>
+            <option value="Laminavimas matinis (abi pusės)">Matinis (abi pusės)</option>
+            <option value="Soft touch (viena pusė)">Soft touch (viena pusė)</option>
+            <option value="Soft touch (abi pusės)">Soft touch (abi pusės)</option>
           </select>
         </div>
         <div class="field">
           <label>Folijavimas</label>
           <select id="fol">
             <option value="">— nėra —</option>
-            <option value="Viena pusė">Viena pusė</option>
-            <option value="Abi pusės">Abi pusės</option>
+            <option value="Folijavimas auksinė (viena pusė)">Auksinė (viena pusė)</option>
+            <option value="Folijavimas auksinė (abi pusės)">Auksinė (abi pusės)</option>
+            <option value="Folijavimas sidabrinė (viena pusė)">Sidabrinė (viena pusė)</option>
+            <option value="Folijavimas sidabrinė (abi pusės)">Sidabrinė (abi pusės)</option>
           </select>
         </div>
       </div>
@@ -436,12 +442,16 @@ function recalcSpaudos() {
   const printTotal = unitPrice != null ? unitPrice * sheets : null;
   document.getElementById('b-print').textContent = fmt2(printTotal);
 
+  // Laminavimo kainų tipas - visi naudoja Viena pusė / Abi pusės iš Airtable
+  const lamAirtableType = lamVal.includes('abi pusės') ? 'Abi pusės' : 'Viena pusė';
+  const folAirtableType = folVal.includes('abi pusės') ? 'Abi pusės' : 'Viena pusė';
+
   let lamTotal = null;
   if (lamVal) {
-    const lu = getTieredPrice(lamPrices, qty, 'Tiražas_nuo', 'Kaina', r => r['Tipas'] === lamVal);
+    const lu = getTieredPrice(lamPrices, qty, 'Tiražas_nuo', 'Kaina', r => r['Tipas'] === lamAirtableType);
     if (lu != null) lamTotal = lu * sheets;
     document.getElementById('b-lam-row').style.display = '';
-    document.getElementById('b-lam-label').textContent = 'Laminavimas (' + lamVal.toLowerCase() + ')';
+    document.getElementById('b-lam-label').textContent = lamVal;
     document.getElementById('b-lam').textContent = fmt2(lamTotal);
   } else {
     document.getElementById('b-lam-row').style.display = 'none';
@@ -449,10 +459,10 @@ function recalcSpaudos() {
 
   let folTotal = null;
   if (folVal) {
-    const fu = getTieredPrice(folPrices, qty, 'Tiražas_nuo', 'Kaina', r => r['Tipas'] === folVal);
+    const fu = getTieredPrice(folPrices, qty, 'Tiražas_nuo', 'Kaina', r => r['Tipas'] === folAirtableType);
     if (fu != null) folTotal = fu * sheets;
     document.getElementById('b-fol-row').style.display = '';
-    document.getElementById('b-fol-label').textContent = 'Folijavimas (' + folVal.toLowerCase() + ')';
+    document.getElementById('b-fol-label').textContent = folVal;
     document.getElementById('b-fol').textContent = fmt2(folTotal);
   } else {
     document.getElementById('b-fol-row').style.display = 'none';
@@ -609,12 +619,12 @@ async function submitOrder() {
   if (isViz) {
     fields['Kiekis'] = parseInt(document.getElementById('v-qty').value) || 0;
     fields['Spalvingumas'] = document.getElementById('v-color').value;
-    fields['Formatas'] = 'Vizitinės 90×50 / 85×55';
+    fields['formatas'] = 'Vizitinės 90×50 / 85×55';
     fields['Galutinė kaina'] = parseFloat(document.getElementById('v-b-total').textContent) || 0;
     fields['Galutinė su PVM'] = parseFloat(document.getElementById('v-b-totalvat').textContent) || 0;
   } else {
     const fmt = document.getElementById('fmt').value;
-    fields['Formatas'] = fmt === 'custom' ? 'Nestandartinis' : fmt;
+    fields['formatas'] = fmt === 'custom' ? 'Nestandartinis' : fmt;
     if (fmt === 'custom') {
       fields['Matmenys'] = document.getElementById('cw').value + '×' + document.getElementById('ch').value + ' mm';
     }
@@ -624,10 +634,10 @@ async function submitOrder() {
     const uzb = [];
     const lam = document.getElementById('lam').value;
     const fol = document.getElementById('fol').value;
-    if (lam) uzb.push('Laminavimas ' + lam);
-    if (fol) uzb.push('Folijavimas ' + fol);
+    if (lam) uzb.push(lam);
+    if (fol) uzb.push(fol);
     document.querySelectorAll('.extra-check:checked').forEach(cb => uzb.push(cb.dataset.op));
-    if (uzb.length) fields['Užbaigimas'] = uzb.join(', ');
+    if (uzb.length) fields['Užbaigimas'] = uzb;
     fields['Galutinė kaina'] = parseFloat(document.getElementById('b-total').textContent) || 0;
     fields['Galutinė su PVM'] = parseFloat(document.getElementById('b-totalvat').textContent) || 0;
   }
