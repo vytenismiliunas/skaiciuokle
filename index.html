@@ -581,12 +581,12 @@ async function loadClients() {
     const d = await r.json();
     const sel = document.getElementById('order-client');
     d.records
-      .filter(rec => rec.fields['Įmonės pavadinimas arba brandas'])
-      .sort((a,b) => a.fields['Įmonės pavadinimas arba brandas'].localeCompare(b.fields['Įmonės pavadinimas arba brandas']))
+      .filter(rec => rec.fields['Įmonės pavadinimas'])
+      .sort((a,b) => a.fields['Įmonės pavadinimas'].localeCompare(b.fields['Įmonės pavadinimas']))
       .forEach(rec => {
         const opt = document.createElement('option');
         opt.value = rec.id;
-        opt.textContent = rec.fields['Įmonės pavadinimas arba brandas'];
+        opt.textContent = rec.fields['Įmonės pavadinimas'];
         sel.appendChild(opt);
       });
   } catch(e) { console.error('Klientų klaida:', e); }
