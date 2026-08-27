@@ -9,14 +9,14 @@
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; }
   .header { background: #f5a623; color: white; padding: 1.25rem 2rem; display: flex; align-items: center; gap: 1rem; }
   .header h1 { font-size: 18px; font-weight: 500; }
-  .header span { font-size: 13px; color: #888; }
+  .header span { font-size: 13px; color: #fff2d9; }
   .container { max-width: 860px; margin: 2rem auto; padding: 0 1.5rem; }
   .card { background: white; border: 0.5px solid #e0e0e0; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
   .card-title { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1.25rem; }
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
   .field { display: flex; flex-direction: column; gap: 6px; }
   .field label { font-size: 12px; color: #666; }
-  select, input[type=number] {
+  select, input[type=number], input[type=text] {
     width: 100%; padding: 8px 10px; border: 0.5px solid #ddd;
     border-radius: 8px; font-size: 14px; background: white; color: #1a1a1a;
     outline: none; transition: border-color 0.15s;
@@ -26,6 +26,7 @@
   .custom-dims input { flex: 1; }
   .custom-dims span { color: #999; }
   .fit-info { margin-top: 10px; font-size: 12px; color: #666; background: #f8f8f8; padding: 8px 12px; border-radius: 8px; }
+  .fit-info.bad { background: #fff3f3; color: #c00; }
   .checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .check-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 0.5px solid #e8e8e8; border-radius: 8px; cursor: pointer; transition: background 0.1s; }
   .check-item:hover { background: #f8f8f8; }
@@ -40,12 +41,12 @@
   .b-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; color: #555; }
   .b-row.total { font-size: 16px; font-weight: 600; color: #1a1a1a; border-top: 0.5px solid #eee; margin-top: 8px; padding-top: 12px; }
   .b-row.vat { font-size: 13px; color: #888; }
+  .note { font-size: 11px; color: #b07000; background: #fff8ec; border-radius: 6px; padding: 6px 10px; margin-top: 8px; display: none; }
   .loading { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #888; padding: 1rem 0; }
   .spinner { width: 16px; height: 16px; border: 2px solid #eee; border-top-color: #888; border-radius: 50%; animation: spin 0.6s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .error { background: #fff3f3; border: 0.5px solid #fcc; border-radius: 8px; padding: 12px; font-size: 13px; color: #c00; margin-bottom: 1rem; }
   .result-card { background: white; border: 0.5px solid #e0e0e0; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
-  /* Type switcher */
   .type-switcher { display: flex; gap: 8px; margin-bottom: 1.5rem; }
   .type-btn { flex: 1; padding: 16px; border: 0.5px solid #ddd; border-radius: 10px; background: white; font-size: 18px; cursor: pointer; transition: all 0.15s; color: #666; }
   .type-btn.active { background: #f5a623; color: white; border-color: #1a1a1a; font-weight: 500; }
@@ -82,7 +83,7 @@
             <option value="A5">A5 (148×210 mm)</option>
             <option value="A4" selected>A4 (210×297 mm)</option>
             <option value="A3">A3 (297×420 mm)</option>
-            <option value="SRA3">SRA3 (320×450 mm)</option>
+            <option value="SRA3">SRA3 (visas lapas)</option>
             <option value="custom">Nestandartinis...</option>
           </select>
         </div>
@@ -93,11 +94,11 @@
       </div>
       <div id="custom-wrap" style="display:none; margin-top:1rem;">
         <div class="field">
-          <label>Matmenys (mm) — plotis × aukštis</label>
+          <label>Matmenys (mm) — plotis × aukštis (maks. 441×314)</label>
           <div class="custom-dims">
-            <input type="number" id="cw" placeholder="Plotis" value="200" min="10" max="440">
+            <input type="number" id="cw" placeholder="Plotis" value="200" min="10" max="441">
             <span>×</span>
-            <input type="number" id="ch" placeholder="Aukštis" value="150" min="10" max="313">
+            <input type="number" id="ch" placeholder="Aukštis" value="150" min="10" max="441">
           </div>
         </div>
       </div>
@@ -147,7 +148,7 @@
           </select>
         </div>
       </div>
-      <p style="font-size:12px;color:#888;margin-bottom:0.75rem;">Papildomos operacijos</p>
+      <p style="font-size:12px;color:#888;margin-bottom:0.75rem;">Papildomos operacijos (skaičiuojamos už gaminį)</p>
       <div class="checkbox-grid" id="postpress-grid">
         <div class="loading"><div class="spinner"></div> Kraunama...</div>
       </div>
@@ -178,6 +179,7 @@
         <div class="b-row total"><span>Viso (be PVM)</span><span id="b-total">—</span></div>
         <div class="b-row vat"><span>PVM 21%</span><span id="b-vat">—</span></div>
         <div class="b-row total"><span>Viso (su PVM)</span><span id="b-totalvat">—</span></div>
+        <div class="note" id="b-note"></div>
       </div>
     </div>
   </div>
@@ -189,7 +191,7 @@
       <div class="grid2">
         <div class="field">
           <label>Tiražas (vnt.)</label>
-          <input type="number" id="v-qty" value="100" min="50">
+          <input type="number" id="v-qty" value="100" min="1">
         </div>
         <div class="field">
           <label>Spalvingumas</label>
@@ -208,21 +210,27 @@
           <label>Laminavimas</label>
           <select id="v-lam">
             <option value="">— nėra —</option>
-            <option value="mat">Mat / blizgus (+3.00€/100vnt)</option>
-            <option value="soft">Soft touch (+6.00€/100vnt)</option>
+            <option value="Laminavimas blizgus (viena pusė)">Blizgus (viena pusė)</option>
+            <option value="Laminavimas blizgus (abi pusės)">Blizgus (abi pusės)</option>
+            <option value="Laminavimas matinis (viena pusė)">Matinis (viena pusė)</option>
+            <option value="Laminavimas matinis (abi pusės)">Matinis (abi pusės)</option>
+            <option value="Soft touch (viena pusė)">Soft touch (viena pusė)</option>
+            <option value="Soft touch (abi pusės)">Soft touch (abi pusės)</option>
           </select>
         </div>
         <div class="field">
           <label>Folijavimas</label>
           <select id="v-fol">
             <option value="">— nėra —</option>
-            <option value="Viena pusė">Viena pusė</option>
-            <option value="Abi pusės">Abi pusės</option>
+            <option value="Folijavimas auksinė (viena pusė)">Auksinė (viena pusė)</option>
+            <option value="Folijavimas auksinė (abi pusės)">Auksinė (abi pusės)</option>
+            <option value="Folijavimas sidabrinė (viena pusė)">Sidabrinė (viena pusė)</option>
+            <option value="Folijavimas sidabrinė (abi pusės)">Sidabrinė (abi pusės)</option>
           </select>
         </div>
       </div>
       <div style="margin-top:1rem;">
-        <p style="font-size:12px;color:#888;margin-bottom:0.75rem;">Papildomos operacijos</p>
+        <p style="font-size:12px;color:#888;margin-bottom:0.75rem;">Papildomos operacijos (skaičiuojamos už gaminį)</p>
         <div class="checkbox-grid" id="v-postpress-grid">
           <div class="loading"><div class="spinner"></div> Kraunama...</div>
         </div>
@@ -237,8 +245,9 @@
           <div class="metric-val" id="v-r-qty">—</div>
         </div>
         <div class="metric">
-          <div class="metric-label">Lapų (folijavimui)</div>
+          <div class="metric-label">Lapų kiekis</div>
           <div class="metric-val" id="v-r-sheets">—</div>
+          <div class="metric-sub">po 24 vnt. lape</div>
         </div>
         <div class="metric">
           <div class="metric-label">Kaina / 100vnt</div>
@@ -253,6 +262,7 @@
         <div class="b-row total"><span>Viso (be PVM)</span><span id="v-b-total">—</span></div>
         <div class="b-row vat"><span>PVM 21%</span><span id="v-b-vat">—</span></div>
         <div class="b-row total"><span>Viso (su PVM)</span><span id="v-b-totalvat">—</span></div>
+        <div class="note" id="v-b-note"></div>
       </div>
     </div>
   </div>
@@ -261,66 +271,86 @@
   <!-- UŽSAKYMO FORMA -->
   <div class="card" id="order-form-section">
     <p class="card-title">Pateikti užklausą</p>
-    <div class="grid2" style="margin-bottom:1rem;">
-      <div class="field">
-        <label>Klientas</label>
-        <select id="order-client">
-          <option value="">— pasirinkite —</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Arba naujas klientas</label>
-        <input type="text" id="order-newclient" placeholder="UAB Nauja Įmonė">
-      </div>
-    </div>
-    <div class="grid2" style="margin-bottom:1rem;">
-      <div class="field">
-        <label>Kontaktinis asmuo</label>
-        <input type="text" id="order-contact" placeholder="Vardas Pavardė">
-      </div>
-      <div class="field">
-        <label>El. paštas</label>
-        <input type="text" id="order-email" placeholder="vardas@imone.lt">
-      </div>
-    </div>
     <div class="field" style="margin-bottom:1rem;">
-      <label>Telefonas</label>
-      <input type="text" id="order-phone" placeholder="+370 600 00000">
+      <label>Klientas</label>
+      <select id="order-client">
+        <option value="">— naujas klientas —</option>
+      </select>
     </div>
+
+    <div id="new-client-fields">
+      <div class="grid2" style="margin-bottom:1rem;">
+        <div class="field">
+          <label>Įmonės pavadinimas</label>
+          <input type="text" id="order-newclient" placeholder="UAB Nauja Įmonė">
+        </div>
+        <div class="field">
+          <label>Kontaktinis asmuo</label>
+          <input type="text" id="order-contact" placeholder="Vardas Pavardė">
+        </div>
+      </div>
+      <div class="grid2" style="margin-bottom:1rem;">
+        <div class="field">
+          <label>El. paštas</label>
+          <input type="text" id="order-email" placeholder="vardas@imone.lt">
+        </div>
+        <div class="field">
+          <label>Telefonas</label>
+          <input type="text" id="order-phone" placeholder="+370 600 00000">
+        </div>
+      </div>
+    </div>
+
     <div class="field" style="margin-bottom:1rem;">
       <label>Komentaras</label>
-      <textarea id="order-comment" rows="3" style="width:100%;padding:8px 10px;border:0.5px solid #ddd;border-radius:8px;font-size:14px;resize:vertical;" placeholder="Papildoma informacija..."></textarea>
+      <textarea id="order-comment" rows="3" style="width:100%;padding:8px 10px;border:0.5px solid #ddd;border-radius:8px;font-size:14px;resize:vertical;font-family:inherit;" placeholder="Papildoma informacija..."></textarea>
     </div>
     <div id="order-status" style="display:none;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:1rem;"></div>
-    <button onclick="submitOrder()" style="width:100%;padding:14px;background:#f5a623;color:white;border:none;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;">Pateikti užklausą</button>
+    <button id="order-submit" onclick="submitOrder()" style="width:100%;padding:14px;background:#f5a623;color:white;border:none;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;">Pateikti užklausą</button>
   </div>
 
 </div>
 
 <script>
+/* ============================================================
+   DĖMESIO — SAUGUMAS
+   Šie tokenai matomi kiekvienam, kas atidaro puslapio šaltinį.
+   Prieš viešą paleidimą juos reikia panaikinti Airtable, sukurti
+   naujus ir rašymą perkelti į Make.com / Cloudflare Worker.
+   ============================================================ */
 const TOKEN = 'patQ9tNp2UwtcZYvl.423c6203bd61f113822843196eece46edc42bb1bccc0f6f9b3a229856ea77182';
-const BASE  = 'appZsXw0VPqc0bS6W';
+const WRITE_TOKEN = 'patKUR6Unz3lBlPgs.4c14ad1976cfa898a77520ab4576587cf1a970abd09dc680a1a315315441fbc8';
+const BASE = 'appZsXw0VPqc0bS6W';
+
+const TBL_ORDERS  = 'tbl229vF2I8zLa9XG';
+const TBL_CLIENTS = 'tblZDs9gNB5IlMd8W';
+
 const SHEET_W = 441, SHEET_H = 314;
-const VIZ_W = 90, VIZ_H = 50; // vizitinių formatas folijavimui
+const VIZ_W = 90, VIZ_H = 50;
+const VAT = 0.21;
 
 const FORMATS = {
   A6:{w:105,h:148}, A5:{w:148,h:210}, A4:{w:210,h:297},
-  A3:{w:297,h:420}, SRA3:{w:320,h:450}
+  A3:{w:297,h:420}, SRA3:{w:441,h:314}
 };
 
-let printPrices = [];
-let lamPrices   = [];
-let folPrices   = [];
-let extraOps    = [];
-let vizB2C      = [];
-
+let printPrices = [], lamPrices = [], folPrices = [], extraOps = [], vizB2C = [];
 let currentType = 'spaudos';
+
+// Paskutinio skaičiavimo rezultatai (skaičiais, ne iš textContent)
+let lastSpaudos = { total:null, vat:null, totalVat:null };
+let lastViz     = { total:null, vat:null, totalVat:null };
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 
 async function fetchAll(table) {
   let records = [], offset = null;
   do {
     const url = `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(table)}` +
-      (offset ? `?offset=${offset}` : '');
+      (offset ? `?offset=${encodeURIComponent(offset)}` : '');
     const r = await fetch(url, { headers: { Authorization: `Bearer ${TOKEN}` }, mode: 'cors' });
     if (!r.ok) throw new Error(`Lentelė "${table}" nerasta (${r.status})`);
     const d = await r.json();
@@ -342,34 +372,26 @@ async function loadData() {
     ]);
 
     printPrices = sp.map(r => r.fields);
-    console.log('Pirmas irasas:', JSON.stringify(printPrices[0]));
     lamPrices   = lam.map(r => r.fields);
     folPrices   = fol.map(r => r.fields);
     extraOps    = extra.map(r => r.fields);
     vizB2C      = viz.map(r => r.fields);
 
-    // Popierius dropdown
     const papers = [...new Set(printPrices.map(r => r['Medžiaga']))].filter(Boolean).sort();
-    document.getElementById('paper').innerHTML = papers.map(p => `<option value="${p}">${p}</option>`).join('');
+    document.getElementById('paper').innerHTML =
+      papers.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
 
-    // Postpress checkboxes (spaudos)
-    const grid = document.getElementById('postpress-grid');
-    grid.innerHTML = extraOps.map(op => `
+    const rowHTML = cls => extraOps.map(op => `
       <label class="check-item">
-        <input type="checkbox" class="extra-check" data-op="${op['Operacija']}" data-price="${op['Kaina_vnt']}" data-min="${op['Minimalus_EUR']}">
-        <span style="flex:1;font-size:13px;">${op['Operacija']}</span>
-        <span class="check-price">${op['Kaina_vnt']} €/vnt</span>
+        <input type="checkbox" class="${cls}" data-op="${esc(op['Operacija'])}" data-price="${esc(op['Kaina_vnt'])}" data-min="${esc(op['Minimalus_EUR'])}">
+        <span style="flex:1;font-size:13px;">${esc(op['Operacija'])}</span>
+        <span class="check-price">${esc(op['Kaina_vnt'])} €/vnt</span>
       </label>`).join('');
+
+    document.getElementById('postpress-grid').innerHTML = rowHTML('extra-check');
     document.querySelectorAll('.extra-check').forEach(cb => cb.addEventListener('change', recalcSpaudos));
 
-    // Postpress checkboxes (vizitinės) — be laminavimo
-    const vgrid = document.getElementById('v-postpress-grid');
-    vgrid.innerHTML = extraOps.map(op => `
-      <label class="check-item">
-        <input type="checkbox" class="v-extra-check" data-op="${op['Operacija']}" data-price="${op['Kaina_vnt']}" data-min="${op['Minimalus_EUR']}">
-        <span style="flex:1;font-size:13px;">${op['Operacija']}</span>
-        <span class="check-price">${op['Kaina_vnt']} €/vnt</span>
-      </label>`).join('');
+    document.getElementById('v-postpress-grid').innerHTML = rowHTML('v-extra-check');
     document.querySelectorAll('.v-extra-check').forEach(cb => cb.addEventListener('change', recalcVizitines));
 
     document.getElementById('load-status').textContent = 'Paruošta ✓';
@@ -390,65 +412,122 @@ function switchType(type) {
   document.getElementById('btn-vizitines').classList.toggle('active', type === 'vizitines');
 }
 
+// Grąžina 0, jei gaminys netelpa į lapą
 function calcFit(fw, fh) {
   const n1 = Math.floor(SHEET_W/fw) * Math.floor(SHEET_H/fh);
   const n2 = Math.floor(SHEET_W/fh) * Math.floor(SHEET_H/fw);
-  return Math.max(n1, n2, 1);
+  return Math.max(n1, n2);
 }
 
-function getTieredPrice(rows, qty, tirazField, priceField, filterFn) {
-  const filtered = rows.filter(filterFn).sort((a,b) => parseFloat(a[tirazField]) - parseFloat(b[tirazField]));
-  let price = null;
+/* Suranda kainų pakopą pagal LAPŲ skaičių.
+   Grąžina { row, belowMin, minTier } arba null. */
+function getTier(rows, count, tirazField, filterFn) {
+  const filtered = rows
+    .filter(filterFn)
+    .filter(r => r[tirazField] != null && !isNaN(parseFloat(r[tirazField])))
+    .sort((a,b) => parseFloat(a[tirazField]) - parseFloat(b[tirazField]));
+  if (!filtered.length) return null;
+  let row = null;
   for (const r of filtered) {
-    if (qty >= parseFloat(r[tirazField])) price = parseFloat(r[priceField]);
+    if (count >= parseFloat(r[tirazField])) row = r;
   }
-  return price;
+  return {
+    row: row || filtered[0],
+    belowMin: row === null,
+    minTier: parseFloat(filtered[0][tirazField])
+  };
+}
+
+function tierPrice(rows, count, tirazField, priceField, filterFn) {
+  const t = getTier(rows, count, tirazField, filterFn);
+  if (!t) return null;
+  const v = parseFloat(t.row[priceField]);
+  return isNaN(v) ? null : v;
 }
 
 function fmt2(v) { return v == null ? '—' : v.toFixed(2) + ' €'; }
+
+function sideOf(val) { return val.includes('abi pusės') ? 'Abi pusės' : 'Viena pusė'; }
+
+function calcExtras(selector, qty, targetId) {
+  let total = 0, html = '';
+  document.querySelectorAll(selector + ':checked').forEach(cb => {
+    const pricePerUnit = parseFloat(cb.dataset.price) || 0;
+    const minEur = parseFloat(cb.dataset.min) || 0;
+    const calculated = pricePerUnit * qty;
+    const final = Math.max(calculated, minEur);
+    total += final;
+    const note = calculated < minEur ? ` (min. ${minEur.toFixed(2)} €)` : '';
+    html += `<div class="b-row"><span>${esc(cb.dataset.op)}${note}</span><span>${final.toFixed(2)} €</span></div>`;
+  });
+  document.getElementById(targetId).innerHTML = html;
+  return total;
+}
 
 // ===== SPAUDOS SKAIČIAVIMAS =====
 function recalcSpaudos() {
   const fmtSel = document.getElementById('fmt').value;
   let fw, fh;
   if (fmtSel === 'custom') {
-    fw = parseFloat(document.getElementById('cw').value) || 100;
-    fh = parseFloat(document.getElementById('ch').value) || 100;
+    fw = parseFloat(document.getElementById('cw').value) || 0;
+    fh = parseFloat(document.getElementById('ch').value) || 0;
   } else {
     fw = FORMATS[fmtSel].w; fh = FORMATS[fmtSel].h;
   }
-  const qty = parseInt(document.getElementById('qty').value) || 1;
+
+  const qty   = parseInt(document.getElementById('qty').value) || 1;
   const paper = document.getElementById('paper').value;
   const color = document.getElementById('color').value;
   const lamVal = document.getElementById('lam').value;
   const folVal = document.getElementById('fol').value;
+  const fitBox = document.getElementById('fit-info');
+  const noteEl = document.getElementById('b-note');
+  const notes = [];
 
-  const fit = calcFit(fw, fh);
+  const fit = (fw > 0 && fh > 0) ? calcFit(fw, fh) : 0;
+
+  // Netelpa į lapą — kainos neskaičiuojame
+  if (fit === 0) {
+    fitBox.className = 'fit-info bad';
+    fitBox.textContent = `${fw}×${fh} mm netelpa į 441×314 mm lapą. Sumažinkite matmenis.`;
+    ['r-fit','r-sheets','r-unit','b-print','b-total','b-vat','b-totalvat'].forEach(id =>
+      document.getElementById(id).textContent = '—');
+    document.getElementById('b-lam-row').style.display = 'none';
+    document.getElementById('b-fol-row').style.display = 'none';
+    document.getElementById('b-extra-rows').innerHTML = '';
+    noteEl.style.display = 'none';
+    lastSpaudos = { total:null, vat:null, totalVat:null };
+    return;
+  }
+
   const sheets = Math.ceil(qty / fit);
   const orient1 = Math.floor(SHEET_W/fw)*Math.floor(SHEET_H/fh);
   const orient2 = Math.floor(SHEET_W/fh)*Math.floor(SHEET_H/fw);
-  document.getElementById('fit-info').textContent =
-    `SRA3 (441×314 mm) → ${fw}×${fh} mm: ${fit} vnt. lape` +
+  fitBox.className = 'fit-info';
+  fitBox.textContent =
+    `Lapas 441×314 mm → ${fw}×${fh} mm: ${fit} vnt. lape` +
     (orient1 >= orient2 ? ' (tiesiai)' : ' (pasukta 90°)') +
     ` — lapų reikės: ${sheets}`;
 
   document.getElementById('r-fit').textContent = fit;
   document.getElementById('r-sheets').textContent = sheets;
 
-  const unitPrice = getTieredPrice(printPrices, qty, 'Tiražas_nuo', 'Kaina', r => r['Medžiaga']?.trim() === paper?.trim() && Number(r['Spalvingumas']) === Number(color));
+  // Spausdinimas — pakopa pagal LAPUS
+  const printTier = getTier(printPrices, sheets, 'Tiražas_nuo',
+    r => r['Medžiaga'] && paper && r['Medžiaga'].trim() === paper.trim() && Number(r['Spalvingumas']) === Number(color));
+  const unitPrice = printTier ? parseFloat(printTier.row['Kaina']) : null;
+  if (printTier && printTier.belowMin) notes.push(`Spausdinimo kaina imama iš mažiausios pakopos (nuo ${printTier.minTier} lapų).`);
+
   document.getElementById('r-unit').textContent = unitPrice != null ? unitPrice.toFixed(3) + ' €' : '—';
   document.getElementById('r-unit-sub').textContent = color === '40' ? 'vienpusis' : 'dvipusis';
 
   const printTotal = unitPrice != null ? unitPrice * sheets : null;
   document.getElementById('b-print').textContent = fmt2(printTotal);
 
-  // Laminavimo kainų tipas - visi naudoja Viena pusė / Abi pusės iš Airtable
-  const lamAirtableType = lamVal.includes('abi pusės') ? 'Abi pusės' : 'Viena pusė';
-  const folAirtableType = folVal.includes('abi pusės') ? 'Abi pusės' : 'Viena pusė';
-
+  // Laminavimas — pakopa pagal LAPUS
   let lamTotal = null;
   if (lamVal) {
-    const lu = getTieredPrice(lamPrices, qty, 'Tiražas_nuo', 'Kaina', r => r['Tipas'] === lamAirtableType);
+    const lu = tierPrice(lamPrices, sheets, 'Tiražas_nuo', 'Kaina', r => r['Tipas'] === sideOf(lamVal));
     if (lu != null) lamTotal = lu * sheets;
     document.getElementById('b-lam-row').style.display = '';
     document.getElementById('b-lam-label').textContent = lamVal;
@@ -457,9 +536,10 @@ function recalcSpaudos() {
     document.getElementById('b-lam-row').style.display = 'none';
   }
 
+  // Folijavimas — pakopa pagal LAPUS
   let folTotal = null;
   if (folVal) {
-    const fu = getTieredPrice(folPrices, qty, 'Tiražas_nuo', 'Kaina', r => r['Tipas'] === folAirtableType);
+    const fu = tierPrice(folPrices, sheets, 'Tiražas_nuo', 'Kaina', r => r['Tipas'] === sideOf(folVal));
     if (fu != null) folTotal = fu * sheets;
     document.getElementById('b-fol-row').style.display = '';
     document.getElementById('b-fol-label').textContent = folVal;
@@ -468,86 +548,106 @@ function recalcSpaudos() {
     document.getElementById('b-fol-row').style.display = 'none';
   }
 
-  let extraTotal = 0, extraHTML = '';
-  document.querySelectorAll('.extra-check:checked').forEach(cb => {
-    const pricePerUnit = parseFloat(cb.dataset.price);
-    const minEur = parseFloat(cb.dataset.min);
-    const calculated = pricePerUnit * qty;
-    const final = Math.max(calculated, minEur);
-    extraTotal += final;
-    const note = calculated < minEur ? ` (min. ${minEur.toFixed(2)} €)` : '';
-    extraHTML += `<div class="b-row"><span>${cb.dataset.op}${note}</span><span>${final.toFixed(2)} €</span></div>`;
-  });
-  document.getElementById('b-extra-rows').innerHTML = extraHTML;
+  // Postpress — už GAMINĮ
+  const extraTotal = calcExtras('.extra-check', qty, 'b-extra-rows');
 
-  const total = (printTotal || 0) + (lamTotal || 0) + (folTotal || 0) + extraTotal;
-  const vat = total * 0.21;
-  document.getElementById('b-total').textContent = printTotal != null ? fmt2(total) : '—';
-  document.getElementById('b-vat').textContent = printTotal != null ? fmt2(vat) : '—';
-  document.getElementById('b-totalvat').textContent = printTotal != null ? fmt2(total + vat) : '—';
+  if (printTotal == null) {
+    lastSpaudos = { total:null, vat:null, totalVat:null };
+    document.getElementById('b-total').textContent = '—';
+    document.getElementById('b-vat').textContent = '—';
+    document.getElementById('b-totalvat').textContent = '—';
+    notes.push('Šiai medžiagai / spalvingumui kaina Airtable nerasta.');
+  } else {
+    const total = printTotal + (lamTotal || 0) + (folTotal || 0) + extraTotal;
+    const vat = total * VAT;
+    lastSpaudos = { total: total, vat: vat, totalVat: total + vat };
+    document.getElementById('b-total').textContent = fmt2(total);
+    document.getElementById('b-vat').textContent = fmt2(vat);
+    document.getElementById('b-totalvat').textContent = fmt2(total + vat);
+  }
+
+  noteEl.style.display = notes.length ? '' : 'none';
+  noteEl.textContent = notes.join(' ');
 }
 
 // ===== VIZITINIŲ SKAIČIAVIMAS =====
 function recalcVizitines() {
-  const qty = parseInt(document.getElementById('v-qty').value) || 50;
-  const color = document.getElementById('v-color').value;
+  const qty = parseInt(document.getElementById('v-qty').value) || 1;
+  const color  = document.getElementById('v-color').value;
   const lamVal = document.getElementById('v-lam').value;
   const folVal = document.getElementById('v-fol').value;
+  const noteEl = document.getElementById('v-b-note');
+  const notes = [];
+
+  const vizFit = calcFit(VIZ_W, VIZ_H);        // 24 vnt. lape
+  const sheets = Math.ceil(qty / vizFit);
 
   document.getElementById('v-r-qty').textContent = qty + ' vnt';
+  document.getElementById('v-r-sheets').textContent = sheets;
 
-  // Spausdinimo kaina iš vizitinių lentelės
-  const printPrice = getTieredPrice(vizB2C, qty, 'Tirazas', 'Kaina', r => r['Spalvingumas'] === color);
-  const per100 = printPrice != null ? (printPrice / qty * 100) : null;
+  // Spausdinimas — proporcinga kaina iš žemesnės pakopos vieneto kainos
+  let printPrice = null, per100 = null;
+  const vt = getTier(vizB2C, qty, 'Tirazas', r => r['Spalvingumas'] === color);
+  if (vt) {
+    const tierQty   = parseFloat(vt.row['Tirazas']);
+    const tierTotal = parseFloat(vt.row['Kaina']);
+    if (tierQty > 0 && !isNaN(tierTotal)) {
+      const unit = tierTotal / tierQty;
+      per100 = unit * 100;
+      printPrice = unit * qty;
+      if (vt.belowMin) {
+        printPrice = Math.max(printPrice, tierTotal);
+        notes.push(`Minimalus vizitinių tiražas — ${tierQty} vnt., skaičiuojama pagal jį.`);
+      }
+    }
+  }
   document.getElementById('v-r-unit').textContent = per100 != null ? per100.toFixed(2) + ' €' : '—';
   document.getElementById('v-b-print').textContent = fmt2(printPrice);
 
-  // Laminavimas — kaina už 100vnt
+  // Laminavimas — iš Kainos_Laminavimas pagal LAPUS
   let lamTotal = null;
   if (lamVal) {
-    const lamPer100 = lamVal === 'mat' ? 3.00 : 6.00;
-    lamTotal = lamPer100 * (qty / 100);
+    const lu = tierPrice(lamPrices, sheets, 'Tiražas_nuo', 'Kaina', r => r['Tipas'] === sideOf(lamVal));
+    if (lu != null) lamTotal = lu * sheets;
     document.getElementById('v-b-lam-row').style.display = '';
-    document.getElementById('v-b-lam-label').textContent = lamVal === 'mat' ? 'Laminavimas mat/blizg' : 'Soft touch laminavimas';
+    document.getElementById('v-b-lam-label').textContent = lamVal;
     document.getElementById('v-b-lam').textContent = fmt2(lamTotal);
   } else {
     document.getElementById('v-b-lam-row').style.display = 'none';
   }
 
-  // Folijavimas — lapinė logika su 90×50mm formatu
+  // Folijavimas — iš Kainos_Folijavimas pagal LAPUS
   let folTotal = null;
   if (folVal) {
-    const vizFit = calcFit(VIZ_W, VIZ_H);
-    const vizSheets = Math.ceil(qty / vizFit);
-    document.getElementById('v-r-sheets').textContent = vizSheets;
-    const fu = getTieredPrice(folPrices, qty, 'Tiražas_nuo', 'Kaina', r => r['Tipas'] === folVal);
-    if (fu != null) folTotal = fu * vizSheets;
+    const fu = tierPrice(folPrices, sheets, 'Tiražas_nuo', 'Kaina', r => r['Tipas'] === sideOf(folVal));
+    if (fu != null) folTotal = fu * sheets;
     document.getElementById('v-b-fol-row').style.display = '';
-    document.getElementById('v-b-fol-label').textContent = 'Folijavimas (' + folVal.toLowerCase() + ')';
+    document.getElementById('v-b-fol-label').textContent = folVal;
     document.getElementById('v-b-fol').textContent = fmt2(folTotal);
   } else {
-    document.getElementById('v-r-sheets').textContent = '—';
     document.getElementById('v-b-fol-row').style.display = 'none';
   }
 
-  // Papildomos operacijos
-  let extraTotal = 0, extraHTML = '';
-  document.querySelectorAll('.v-extra-check:checked').forEach(cb => {
-    const pricePerUnit = parseFloat(cb.dataset.price);
-    const minEur = parseFloat(cb.dataset.min);
-    const calculated = pricePerUnit * qty;
-    const final = Math.max(calculated, minEur);
-    extraTotal += final;
-    const note = calculated < minEur ? ` (min. ${minEur.toFixed(2)} €)` : '';
-    extraHTML += `<div class="b-row"><span>${cb.dataset.op}${note}</span><span>${final.toFixed(2)} €</span></div>`;
-  });
-  document.getElementById('v-b-extra-rows').innerHTML = extraHTML;
+  // Postpress — už GAMINĮ
+  const extraTotal = calcExtras('.v-extra-check', qty, 'v-b-extra-rows');
 
-  const total = (printPrice || 0) + (lamTotal || 0) + (folTotal || 0) + extraTotal;
-  const vat = total * 0.21;
-  document.getElementById('v-b-total').textContent = printPrice != null ? fmt2(total) : '—';
-  document.getElementById('v-b-vat').textContent = printPrice != null ? fmt2(vat) : '—';
-  document.getElementById('v-b-totalvat').textContent = printPrice != null ? fmt2(total + vat) : '—';
+  if (printPrice == null) {
+    lastViz = { total:null, vat:null, totalVat:null };
+    document.getElementById('v-b-total').textContent = '—';
+    document.getElementById('v-b-vat').textContent = '—';
+    document.getElementById('v-b-totalvat').textContent = '—';
+    notes.push('Šiam spalvingumui kaina Vizitines_B2C lentelėje nerasta.');
+  } else {
+    const total = printPrice + (lamTotal || 0) + (folTotal || 0) + extraTotal;
+    const vat = total * VAT;
+    lastViz = { total: total, vat: vat, totalVat: total + vat };
+    document.getElementById('v-b-total').textContent = fmt2(total);
+    document.getElementById('v-b-vat').textContent = fmt2(vat);
+    document.getElementById('v-b-totalvat').textContent = fmt2(total + vat);
+  }
+
+  noteEl.style.display = notes.length ? '' : 'none';
+  noteEl.textContent = notes.join(' ');
 }
 
 // Events — spaudos
@@ -556,130 +656,162 @@ document.getElementById('fmt').addEventListener('change', function() {
   recalcSpaudos();
 });
 ['cw','ch','qty'].forEach(id => document.getElementById(id).addEventListener('input', recalcSpaudos));
-document.getElementById('paper').addEventListener('change', recalcSpaudos);
-document.getElementById('color').addEventListener('change', recalcSpaudos);
-document.getElementById('lam').addEventListener('change', recalcSpaudos);
-document.getElementById('fol').addEventListener('change', recalcSpaudos);
+['paper','color','lam','fol'].forEach(id => document.getElementById(id).addEventListener('change', recalcSpaudos));
 
 // Events — vizitinės
 document.getElementById('v-qty').addEventListener('input', recalcVizitines);
-document.getElementById('v-color').addEventListener('change', recalcVizitines);
-document.getElementById('v-lam').addEventListener('change', recalcVizitines);
-document.getElementById('v-fol').addEventListener('change', recalcVizitines);
+['v-color','v-lam','v-fol'].forEach(id => document.getElementById(id).addEventListener('change', recalcVizitines));
 
 
 // ===== UŽSAKYMO FORMA =====
-const WRITE_TOKEN = 'patKUR6Unz3lBlPgs.4c14ad1976cfa898a77520ab4576587cf1a970abd09dc680a1a315315441fbc8';
-const TBL_ORDERS = 'tblc2g1sPycggbIke';
-const TBL_CLIENTS = 'tblZDs9gNB5IlMd8W';
+const clientSel = document.getElementById('order-client');
+
+function toggleClientFields() {
+  document.getElementById('new-client-fields').style.display = clientSel.value ? 'none' : '';
+}
+clientSel.addEventListener('change', toggleClientFields);
 
 async function loadClients() {
   try {
-    const r = await fetch(`https://api.airtable.com/v0/${BASE}/${TBL_CLIENTS}`, {
-      headers: { Authorization: `Bearer ${WRITE_TOKEN}` }, mode: 'cors'
-    });
-    const d = await r.json();
-    const sel = document.getElementById('order-client');
-    d.records
+    const recs = await fetchAll(TBL_CLIENTS);   // READ tokenas
+    recs
       .filter(rec => rec.fields['Įmonės pavadinimas'])
-      .sort((a,b) => a.fields['Įmonės pavadinimas'].localeCompare(b.fields['Įmonės pavadinimas']))
+      .sort((a,b) => a.fields['Įmonės pavadinimas'].localeCompare(b.fields['Įmonės pavadinimas'], 'lt'))
       .forEach(rec => {
         const opt = document.createElement('option');
         opt.value = rec.id;
         opt.textContent = rec.fields['Įmonės pavadinimas'];
-        sel.appendChild(opt);
+        clientSel.appendChild(opt);
       });
-  } catch(e) { console.error('Klientų klaida:', e); }
+  } catch(e) {
+    console.error('Klientų klaida:', e);
+    setStatus('Nepavyko įkelti klientų sąrašo. Įveskite naują klientą.', 'error');
+  }
+}
+
+function setStatus(msg, kind) {
+  const el = document.getElementById('order-status');
+  el.style.display = '';
+  el.textContent = msg;
+  if (kind === 'error')   { el.style.background = '#fff3f3'; el.style.color = '#c00'; }
+  else if (kind === 'ok') { el.style.background = '#f0fff0'; el.style.color = '#2d6a2d'; }
+  else                    { el.style.background = '#f8f8f8'; el.style.color = '#666'; }
+}
+
+async function airtablePost(table, fields) {
+  const r = await fetch(`https://api.airtable.com/v0/${BASE}/${table}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${WRITE_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields }),
+    mode: 'cors'
+  });
+  const d = await r.json();
+  if (!r.ok || !d.id) {
+    const msg = (d && d.error && (d.error.message || d.error.type)) || `HTTP ${r.status}`;
+    throw new Error(msg);
+  }
+  return d;
 }
 
 async function submitOrder() {
-  const clientId = document.getElementById('order-client').value;
+  const btn = document.getElementById('order-submit');
+  let clientId    = clientSel.value;
   const newClient = document.getElementById('order-newclient').value.trim();
-  const comment = document.getElementById('order-comment').value;
-  const phone = document.getElementById('order-phone').value.trim();
-  const statusEl = document.getElementById('order-status');
+  const contact   = document.getElementById('order-contact').value.trim();
+  const email     = document.getElementById('order-email').value.trim();
+  const phone     = document.getElementById('order-phone').value.trim();
+  const comment   = document.getElementById('order-comment').value;
+
+  const isViz = currentType === 'vizitines';
+  const calc  = isViz ? lastViz : lastSpaudos;
 
   if (!clientId && !newClient) {
-    statusEl.style.display = '';
-    statusEl.style.background = '#fff3f3';
-    statusEl.style.color = '#c00';
-    statusEl.textContent = 'Pasirinkite klientą arba įveskite naują!';
+    setStatus('Pasirinkite klientą arba įveskite įmonės pavadinimą!', 'error');
+    return;
+  }
+  if (calc.total == null) {
+    setStatus('Kaina neapskaičiuota — patikslinkite užsakymo parametrus.', 'error');
     return;
   }
 
-  const isViz = currentType === 'vizitines';
-  const fields = {
-    'Tipas': isViz ? 'Vizitinės' : 'Nestandartinis',
-    'Klientų tipas': 'B2C',
-    'Komentaras': comment,
-  };
-
-  if (phone) fields['Telefono numeris'] = phone;
-
-  if (isViz) {
-    fields['Kiekis'] = parseInt(document.getElementById('v-qty').value) || 0;
-    fields['Spalvingumas'] = document.getElementById('v-color').value;
-    fields['Formatas'] = 'Vizitinės 90×50 / 85×55';
-    fields['Galutinė kaina'] = parseFloat(document.getElementById('v-b-total').textContent) || 0;
-    fields['Galutinė su PVM'] = parseFloat(document.getElementById('v-b-totalvat').textContent) || 0;
-  } else {
-    const fmt = document.getElementById('fmt').value;
-    fields['Formatas'] = fmt === 'custom' ? 'Nestandartinis' : fmt;
-    if (fmt === 'custom') {
-      fields['Matmenys'] = document.getElementById('cw').value + '×' + document.getElementById('ch').value + ' mm';
-    }
-    fields['Kiekis'] = parseInt(document.getElementById('qty').value) || 0;
-    fields['Popierius'] = document.getElementById('paper').value;
-    fields['Spalvingumas'] = document.getElementById('color').value === '40' ? '4+0' : '4+4';
-    const uzb = [];
-    const lam = document.getElementById('lam').value;
-    const fol = document.getElementById('fol').value;
-    if (lam) uzb.push(lam);
-    if (fol) uzb.push(fol);
-    document.querySelectorAll('.extra-check:checked').forEach(cb => uzb.push(cb.dataset.op));
-    if (uzb.length) fields['Užbaigimas'] = uzb;
-    fields['Galutinė kaina'] = parseFloat(document.getElementById('b-total').textContent) || 0;
-    fields['Galutinė su PVM'] = parseFloat(document.getElementById('b-totalvat').textContent) || 0;
-  }
-
-  if (clientId) fields['Užsakovas'] = [clientId];
-
-  statusEl.style.display = '';
-  statusEl.style.background = '#f8f8f8';
-  statusEl.style.color = '#666';
-  statusEl.textContent = 'Siunčiama...';
+  btn.disabled = true;
+  setStatus('Siunčiama...', 'info');
 
   try {
-    const r = await fetch(`https://api.airtable.com/v0/${BASE}/${TBL_ORDERS}`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${WRITE_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ fields }),
-      mode: 'cors'
-    });
-    const d = await r.json();
-    if (d.id) {
-      statusEl.style.background = '#f0fff0';
-      statusEl.style.color = '#2d6a2d';
-      statusEl.textContent = 'Užklausa sėkmingai pateikta! ✓';
-      document.getElementById('order-comment').value = '';
-      document.getElementById('order-client').value = '';
-      document.getElementById('order-newclient').value = '';
-      document.getElementById('order-phone').value = '';
-    } else {
-      throw new Error(JSON.stringify(d));
+    // 1) Naujas klientas → Užsakovai
+    if (!clientId) {
+      const cf = { 'Įmonės pavadinimas': newClient };
+      if (contact) cf['Atsakingas žmogus']    = contact;
+      if (email)   cf['Elektroniniai paštai'] = email;
+      if (phone)   cf['Telefono numeris']     = phone;
+
+      const created = await airtablePost(TBL_CLIENTS, cf);
+      clientId = created.id;
+
+      const opt = document.createElement('option');
+      opt.value = clientId;
+      opt.textContent = newClient;
+      clientSel.appendChild(opt);
+      clientSel.value = clientId;
+      toggleClientFields();
     }
+
+    // 2) Užsakymas → Užsakymai
+    const fields = {
+      'Tipas': isViz ? 'Vizitinės' : 'Lapinė spauda',
+      'Klientų tipas': 'B2C',
+      'Komentaras': comment,
+      'Užsakymo data': new Date().toISOString().slice(0,10),
+      'Užsakovas': [clientId],
+      'Galutinė kaina': Math.round(calc.total * 100) / 100,
+      'Galutinė su PVM': Math.round(calc.totalVat * 100) / 100
+    };
+    if (phone) fields['Telefono numeris'] = phone;
+
+    const uzb = [];
+    if (isViz) {
+      fields['Kiekis'] = parseInt(document.getElementById('v-qty').value) || 0;
+      fields['Formatas'] = 'Vizitinės 90×50 / 85×55';
+      fields['Spalvingumas'] = document.getElementById('v-color').value === 'Vienpusės' ? '4+0' : '4+4';
+      const l = document.getElementById('v-lam').value;
+      const f = document.getElementById('v-fol').value;
+      if (l) uzb.push(l);
+      if (f) uzb.push(f);
+      document.querySelectorAll('.v-extra-check:checked').forEach(cb => uzb.push(cb.dataset.op));
+    } else {
+      const fmtSel = document.getElementById('fmt').value;
+      fields['Formatas'] = fmtSel === 'custom' ? 'Nestandartinis' : fmtSel;
+      if (fmtSel === 'custom') {
+        fields['Matmenys'] = document.getElementById('cw').value + '×' + document.getElementById('ch').value + ' mm';
+      }
+      fields['Kiekis'] = parseInt(document.getElementById('qty').value) || 0;
+      fields['Popierius'] = document.getElementById('paper').value;
+      fields['Spalvingumas'] = document.getElementById('color').value === '40' ? '4+0' : '4+4';
+      const l = document.getElementById('lam').value;
+      const f = document.getElementById('fol').value;
+      if (l) uzb.push(l);
+      if (f) uzb.push(f);
+      document.querySelectorAll('.extra-check:checked').forEach(cb => uzb.push(cb.dataset.op));
+    }
+    if (uzb.length) fields['Užbaigimas'] = uzb;
+
+    await airtablePost(TBL_ORDERS, fields);
+
+    setStatus('Užklausa sėkmingai pateikta! ✓', 'ok');
+    document.getElementById('order-comment').value = '';
+    document.getElementById('order-newclient').value = '';
+    document.getElementById('order-contact').value = '';
+    document.getElementById('order-email').value = '';
+    document.getElementById('order-phone').value = '';
   } catch(e) {
-    statusEl.style.background = '#fff3f3';
-    statusEl.style.color = '#c00';
-    statusEl.textContent = 'Klaida: ' + e.message;
+    setStatus('Klaida: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
   }
 }
 
+toggleClientFields();
 loadClients();
-
 loadData();
 </script>
 </body>
