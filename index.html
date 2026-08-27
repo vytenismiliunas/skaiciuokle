@@ -438,11 +438,45 @@ function getTier(rows, count, tirazField, filterFn) {
   };
 }
 
-function tierPrice(rows, count, tirazField, priceField, filterFn) {
+/* Suskaičiuoja sumą ir pritaiko „lubas": jei kuri nors AUKŠTESNĖ pakopa
+   kainuotų pigiau, imama ji. Taip mažesnis kiekis niekada nekainuoja
+   daugiau už didesnį.
+   perUnit=true  → Kaina yra už vieną lapą (spauda, laminavimas, folijavimas)
+   perUnit=false → Kaina yra suma už visą pakopos tiražą (vizitinės)
+   Grąžina { total, unit, belowMin, minTier, tierQty } arba null. */
+function cappedTotal(rows, count, tirazField, priceField, filterFn, perUnit) {
   const t = getTier(rows, count, tirazField, filterFn);
   if (!t) return null;
-  const v = parseFloat(t.row[priceField]);
-  return isNaN(v) ? null : v;
+
+  const p  = parseFloat(t.row[priceField]);
+  const tq = parseFloat(t.row[tirazField]);
+  if (isNaN(p)) return null;
+
+  let total;
+  if (perUnit) {
+    total = p * count;
+  } else {
+    if (!(tq > 0)) return null;
+    total = (p / tq) * count;
+    if (t.belowMin) total = Math.max(total, p);   // minimalus tiražas
+  }
+
+  // Lubos — pigiausia suma iš visų aukštesnių pakopų
+  rows.filter(filterFn).forEach(r => {
+    const rq = parseFloat(r[tirazField]);
+    const rp = parseFloat(r[priceField]);
+    if (isNaN(rq) || isNaN(rp) || rq <= count) return;
+    const candidate = perUnit ? rp * rq : rp;
+    if (candidate < total) total = candidate;
+  });
+
+  return {
+    total: total,
+    unit: count > 0 ? total / count : null,
+    belowMin: t.belowMin,
+    minTier: t.minTier,
+    tierQty: tq
+  };
 }
 
 function fmt2(v) { return v == null ? '—' : v.toFixed(2) + ' €'; }
@@ -513,22 +547,21 @@ function recalcSpaudos() {
   document.getElementById('r-sheets').textContent = sheets;
 
   // Spausdinimas — pakopa pagal LAPUS
-  const printTier = getTier(printPrices, sheets, 'Tiražas_nuo',
-    r => r['Medžiaga'] && paper && r['Medžiaga'].trim() === paper.trim() && Number(r['Spalvingumas']) === Number(color));
-  const unitPrice = printTier ? parseFloat(printTier.row['Kaina']) : null;
-  if (printTier && printTier.belowMin) notes.push(`Spausdinimo kaina imama iš mažiausios pakopos (nuo ${printTier.minTier} lapų).`);
+  const printCalc = cappedTotal(printPrices, sheets, 'Tiražas_nuo', 'Kaina',
+    r => r['Medžiaga'] && paper && r['Medžiaga'].trim() === paper.trim() && Number(r['Spalvingumas']) === Number(color), true);
+  if (printCalc && printCalc.belowMin) notes.push(`Spausdinimo kaina imama iš mažiausios pakopos (nuo ${printCalc.minTier} lapų).`);
 
-  document.getElementById('r-unit').textContent = unitPrice != null ? unitPrice.toFixed(3) + ' €' : '—';
+  document.getElementById('r-unit').textContent = printCalc ? printCalc.unit.toFixed(3) + ' €' : '—';
   document.getElementById('r-unit-sub').textContent = color === '40' ? 'vienpusis' : 'dvipusis';
 
-  const printTotal = unitPrice != null ? unitPrice * sheets : null;
+  const printTotal = printCalc ? printCalc.total : null;
   document.getElementById('b-print').textContent = fmt2(printTotal);
 
   // Laminavimas — pakopa pagal LAPUS
   let lamTotal = null;
   if (lamVal) {
-    const lu = tierPrice(lamPrices, sheets, 'Tiražas_nuo', 'Kaina', r => r['Tipas'] === sideOf(lamVal));
-    if (lu != null) lamTotal = lu * sheets;
+    const lc = cappedTotal(lamPrices, sheets, 'Tiražas_nuo', 'Kaina', r => r['Tipas'] === sideOf(lamVal), true);
+    if (lc) lamTotal = lc.total;
     document.getElementById('b-lam-row').style.display = '';
     document.getElementById('b-lam-label').textContent = lamVal;
     document.getElementById('b-lam').textContent = fmt2(lamTotal);
@@ -539,8 +572,8 @@ function recalcSpaudos() {
   // Folijavimas — pakopa pagal LAPUS
   let folTotal = null;
   if (folVal) {
-    const fu = tierPrice(folPrices, sheets, 'Tiražas_nuo', 'Kaina', r => r['Tipas'] === sideOf(folVal));
-    if (fu != null) folTotal = fu * sheets;
+    const fc = cappedTotal(folPrices, sheets, 'Tiražas_nuo', 'Kaina', r => r['Tipas'] === sideOf(folVal), true);
+    if (fc) folTotal = fc.total;
     document.getElementById('b-fol-row').style.display = '';
     document.getElementById('b-fol-label').textContent = folVal;
     document.getElementById('b-fol').textContent = fmt2(folTotal);
@@ -587,19 +620,11 @@ function recalcVizitines() {
 
   // Spausdinimas — proporcinga kaina iš žemesnės pakopos vieneto kainos
   let printPrice = null, per100 = null;
-  const vt = getTier(vizB2C, qty, 'Tirazas', r => r['Spalvingumas'] === color);
-  if (vt) {
-    const tierQty   = parseFloat(vt.row['Tirazas']);
-    const tierTotal = parseFloat(vt.row['Kaina']);
-    if (tierQty > 0 && !isNaN(tierTotal)) {
-      const unit = tierTotal / tierQty;
-      per100 = unit * 100;
-      printPrice = unit * qty;
-      if (vt.belowMin) {
-        printPrice = Math.max(printPrice, tierTotal);
-        notes.push(`Minimalus vizitinių tiražas — ${tierQty} vnt., skaičiuojama pagal jį.`);
-      }
-    }
+  const vc = cappedTotal(vizB2C, qty, 'Tirazas', 'Kaina', r => r['Spalvingumas'] === color, false);
+  if (vc) {
+    printPrice = vc.total;
+    per100 = vc.unit * 100;
+    if (vc.belowMin) notes.push(`Minimalus vizitinių tiražas — ${vc.tierQty} vnt., skaičiuojama pagal jį.`);
   }
   document.getElementById('v-r-unit').textContent = per100 != null ? per100.toFixed(2) + ' €' : '—';
   document.getElementById('v-b-print').textContent = fmt2(printPrice);
@@ -607,8 +632,8 @@ function recalcVizitines() {
   // Laminavimas — iš Kainos_Laminavimas pagal LAPUS
   let lamTotal = null;
   if (lamVal) {
-    const lu = tierPrice(lamPrices, sheets, 'Tiražas_nuo', 'Kaina', r => r['Tipas'] === sideOf(lamVal));
-    if (lu != null) lamTotal = lu * sheets;
+    const lc = cappedTotal(lamPrices, sheets, 'Tiražas_nuo', 'Kaina', r => r['Tipas'] === sideOf(lamVal), true);
+    if (lc) lamTotal = lc.total;
     document.getElementById('v-b-lam-row').style.display = '';
     document.getElementById('v-b-lam-label').textContent = lamVal;
     document.getElementById('v-b-lam').textContent = fmt2(lamTotal);
@@ -619,8 +644,8 @@ function recalcVizitines() {
   // Folijavimas — iš Kainos_Folijavimas pagal LAPUS
   let folTotal = null;
   if (folVal) {
-    const fu = tierPrice(folPrices, sheets, 'Tiražas_nuo', 'Kaina', r => r['Tipas'] === sideOf(folVal));
-    if (fu != null) folTotal = fu * sheets;
+    const fc = cappedTotal(folPrices, sheets, 'Tiražas_nuo', 'Kaina', r => r['Tipas'] === sideOf(folVal), true);
+    if (fc) folTotal = fc.total;
     document.getElementById('v-b-fol-row').style.display = '';
     document.getElementById('v-b-fol-label').textContent = folVal;
     document.getElementById('v-b-fol').textContent = fmt2(folTotal);
